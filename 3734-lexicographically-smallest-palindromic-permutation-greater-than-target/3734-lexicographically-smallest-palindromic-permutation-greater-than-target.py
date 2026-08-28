@@ -1,164 +1,113 @@
-
 class Solution:
     def lexPalindromicPermutation(self, s: str, target: str) -> str:
         n = len(s)
 
+        # Count characters
         count = [0] * 26
 
         for ch in s:
             count[ord(ch) - ord('a')] += 1
 
-        # Check whether palindrome is possible
-        odd = -1
+        # A palindrome can have at most one character with odd frequency
+        odd_chars = []
 
         for i in range(26):
             if count[i] % 2 == 1:
-                if odd != -1:
-                    return ""
-                odd = i
+                odd_chars.append(i)
 
-        # Frequency for the first half
-        half = [0] * 26
+        if len(odd_chars) > 1:
+            return ""
+
+        # Build counts for the left half
+        half_count = [0] * 26
 
         for i in range(26):
-            half[i] = count[i] // 2
+            half_count[i] = count[i] // 2
 
-        m = n // 2
-        target_half = target[:m]
+        half_len = n // 2
+        target_left = target[:half_len]
 
-        # Try to make the first half greater
-        for pos in range(m - 1, -1, -1):
+        middle = ""
 
-            remaining = half[:]
-            valid = True
+        if n % 2 == 1 and odd_chars:
+            middle = chr(ord('a') + odd_chars[0])
 
-            # Match prefix with target
-            for i in range(pos):
-                c = ord(target_half[i]) - ord('a')
+        # --------------------------------------------------
+        # CASE 1:
+        # Try using exactly target_left as the left half.
+        # --------------------------------------------------
 
-                if remaining[c] == 0:
-                    valid = False
+        remaining = half_count[:]
+        possible = True
+
+        for ch in target_left:
+            idx = ord(ch) - ord('a')
+
+            if remaining[idx] == 0:
+                possible = False
+                break
+
+            remaining[idx] -= 1
+
+        if possible:
+            left = target_left
+
+            if n % 2 == 1:
+                palindrome = left + middle + left[::-1]
+            else:
+                palindrome = left + left[::-1]
+
+            if palindrome > target:
+                return palindrome
+
+        # --------------------------------------------------
+        # CASE 2:
+        # Find the smallest left half greater than target_left.
+        # --------------------------------------------------
+
+        for i in range(half_len - 1, -1, -1):
+
+            remaining = half_count[:]
+            possible = True
+
+            # Keep prefix equal to target
+            for j in range(i):
+                idx = ord(target_left[j]) - ord('a')
+
+                if remaining[idx] == 0:
+                    possible = False
                     break
 
-                remaining[c] -= 1
+                remaining[idx] -= 1
 
-            if not valid:
+            if not possible:
                 continue
 
-            # Choose the smallest character greater than target[pos]
-            current = ord(target_half[pos]) - ord('a')
-            bigger = -1
+            current = ord(target_left[i]) - ord('a')
 
-            for c in range(current + 1, 26):
-                if remaining[c] > 0:
-                    bigger = c
-                    break
+            # Pick the smallest character greater than target[i]
+            for next_char in range(current + 1, 26):
 
-            if bigger == -1:
-                continue
+                if remaining[next_char] > 0:
 
-            # Construct first half
-            first = []
+                    remaining[next_char] -= 1
 
-            for i in range(pos):
-                first.append(target_half[i])
+                    left = target_left[:i]
+                    left += chr(ord('a') + next_char)
 
-            first.append(chr(bigger + ord('a')))
-            remaining[bigger] -= 1
+                    # Fill remaining characters in sorted order
+                    for c in range(26):
+                        left += chr(ord('a') + c) * remaining[c]
 
-            # Fill remaining positions with smallest characters
-            for c in range(26):
-                while remaining[c] > 0:
-                    first.append(chr(c + ord('a')))
-                    remaining[c] -= 1
+                    # Construct palindrome
+                    if n % 2 == 1:
+                        palindrome = left + middle + left[::-1]
+                    else:
+                        palindrome = left + left[::-1]
 
-            first = ''.join(first)
-
-            # Middle character for odd length
-            middle = ""
-
-            if odd != -1:
-                middle = chr(odd + ord('a'))
-
-            # Construct palindrome
-            return first + middle + first[::-1]
+                    return palindrome
 
         return ""
-
-        for i in range(26):
-            if count[i] % 2 == 1:
-                if odd != -1:
-                    return ""
-                odd = i
-
-        # Build frequency of the first half
-        half = [0] * 26
-
-        for i in range(26):
-            half[i] = count[i] // 2
-
-        m = n // 2
-        target_half = target[:m]
-
-        # Find the smallest first half greater than target_half
-        for pos in range(m - 1, -1, -1):
-
-            remaining = half[:]
-            valid = True
-
-            # Match the prefix of target
-            for i in range(pos):
-                c = ord(target_half[i]) - ord('a')
-
-                if remaining[c] == 0:
-                    valid = False
-                    break
-
-                remaining[c] -= 1
-
-            if not valid:
-                continue
-
-            # Find smallest character greater than target[pos]
-            current = ord(target_half[pos]) - ord('a')
-            bigger = -1
-
-            for c in range(current + 1, 26):
-                if remaining[c] > 0:
-                    bigger = c
-                    break
-
-            if bigger == -1:
-                continue
-
-            # Build the first half
-            first = []
-
-            for i in range(pos):
-                first.append(target_half[i])
-
-            first.append(chr(bigger + ord('a')))
-            remaining[bigger] -= 1
-
-            # Fill remaining characters in sorted order
-            for c in range(26):
-                while remaining[c] > 0:
-                    first.append(chr(c + ord('a')))
-                    remaining[c] -= 1
-
-            first = ''.join(first)
-
-            # Middle character if length is odd
-            middle = ""
-
-            if odd != -1:
-                middle = chr(odd + ord('a'))
-
-            # Complete palindrome
-            return first + middle + first[::-1]
-
-        return ""
-
 
 # Synced seamlessly with LeetHub Pro
 # Pro features: https://bit.ly/leethubpro | Free version: https://bit.ly/leethubv4
